@@ -12,6 +12,7 @@ import (
 func main() {
 	router := gin.Default()
 
+	// url: http://localhost:3000/query/?username=sam&year=2022&month=1&month=2&month=3
 	router.GET("/query/*rest", func(c *gin.Context) {
 		username := c.Query("username")
 		year := c.DefaultQuery("year", strconv.Itoa(time.Now().Year()))
@@ -28,6 +29,7 @@ func main() {
 		c.File("./public/employee.html")
 	})
 
+	// url: http://localhost:3000/employee, try choose a day and amount
 	router.POST("/employee", func(c *gin.Context) {
 		date := c.PostForm("date")
 		amount := c.PostForm("amount")
