@@ -10,11 +10,12 @@ import (
 func main() {
 	router := gin.Default()
 
-	router.StaticFile("/", "./public/index.html") // http://localhost:3000/
+	router.GET("/employee", func(c *gin.Context) {
+		c.File("./public/employee.html")
+	})
 
-	router.Static("/public", "./public") // http://localhost:3000/public/employee.html
-
-	router.StaticFS("/fs", http.Dir("./public")) // http://localhost:3000/fs/employee.html
-
+	router.POST("/employee", func(c *gin.Context) {
+		c.String(http.StatusOK, "New Request Post!")
+	})
 	log.Fatal(router.Run(":3000"))
 }
