@@ -10,12 +10,13 @@ import (
 func main() {
 	router := gin.Default()
 
-	router.GET("/employee", func(c *gin.Context) {
-		c.File("./public/employee.html")
+	// url:http://localhost:3000/employees/sam/role/33
+	router.GET("/employees/:username/*rest", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"username": c.Param("username"),
+			"rest":     c.Param("rest"),
+		})
 	})
 
-	router.POST("/employee", func(c *gin.Context) {
-		c.String(http.StatusOK, "New Request Post!")
-	})
 	log.Fatal(router.Run(":3000"))
 }
