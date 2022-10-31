@@ -3,60 +3,48 @@ package main
 import (
 	_ "embed"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
-	"github.com/go-playground/validator/v10"
+	"io"
 	"log"
 	"net/http"
-	"time"
+	"os"
 )
-
-type TimeoffRequest struct {
-	Date   time.Time `json:"date" form:"date" time_format:"2006-01-02" binding:"required,future"`
-	Amount float64   `json:"amount" form:"amount" binding:"required,gt=0"`
-}
-
-var ValidatorFuture validator.Func = func(fl validator.FieldLevel) bool {
-	date, ok := fl.Field().Interface().(time.Time)
-	if ok {
-		return date.After(time.Now())
-	}
-	return true
-}
 
 func main() {
 	router := gin.Default()
 
-	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		v.RegisterValidation("future", ValidatorFuture)
-	}
+	router.StaticFile("/", "./index.html")
 
-	apiGroup := router.Group("/api")
+	router.GET("/tale_of_two_cities", func(c *gin.Context) {
+		f, err := os.Open("./a_tale_of_two_cities.txt")
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+		}
+		defer f.Close()
+		data, err := io.ReadAll(f)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+		}
+		c.Data(http.StatusOK, "text/plain", data)
+	})
 
-	/*
-		Works with message:
-		{
-			"date": "2022-12-31T00:00:00Z",
-			"amount": 8
+	router.GET("/great_expectations", func(c *gin.Context) {
+		f, err := os.Open("./great_expectations.txt")
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+		}
+		defer f.Close()
+		fi, err := f.Stat()
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
 		}
 
-		Fails with messages:
-		{
-			"date": "2022-12-31T00:00:00Z",
-			"amount": -4											// invalid amount
-		}
+		c.DataFromReader(http.StatusOK,
+			fi.Size(),
+			"text/plain",
+			f,
+			map[string]string{"Content-Disposition": "attachment; filename=great_expectations.txt"},
+		)
 
-		{
-			"date": "2000-01-01T00:00:00Z",  	// invalid date
-			"amount": 8
-		}
-	*/
-	apiGroup.POST("/timeoff", func(c *gin.Context) {
-		var timeoffRequest TimeoffRequest
-		if err := c.ShouldBindJSON(&timeoffRequest); err == nil {
-			c.JSON(http.StatusOK, timeoffRequest)
-		} else {
-			c.String(http.StatusInternalServerError, err.Error())
-		}
 	})
 
 	log.Fatal(router.Run(":3000"))
